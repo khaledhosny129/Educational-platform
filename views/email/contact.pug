@@ -1,0 +1,20 @@
+doctype html
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title= subject
+  body
+    h1 You've got a new message!
+    p
+      strong Name:
+      | #{name}
+    p
+      strong Email:
+      | #{email}
+    p
+      strong Subject:
+      | #{subject}
+    p
+      strong Message:
+      | #{message}

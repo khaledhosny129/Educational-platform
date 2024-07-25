@@ -1,0 +1,17 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+  p Welcome to Smart Weather Forecasting!
+  p To complete your registration, please confirm your email address by clicking the link below:
+  table.btn.btn-primary(role='presentation', border='0', cellpadding='0', cellspacing='0')
+    tbody
+      tr
+        td(align='left')
+          table(role='presentation', border='0', cellpadding='0', cellspacing='0')
+            tbody
+              tr
+                td
+                  a(href=`${url}`, target='_blank') Confirm Your Email
+  p If you didn't register on our platform, please ignore this email. Your account is safe with us!
+  p - © 2024 Smart Weather Forecasting

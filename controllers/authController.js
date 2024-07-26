@@ -39,11 +39,28 @@ const createSendToken = (user, statusCode, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+  const {
+    name,
+    email,
+    password,
+    passwordConfirm,
+    phoneNumber,
+    parentPhoneNumber,
+    schoolName
+  } = req.body;
+
+  const userAgent = req.headers['user-agent'];
+  const ipAddress = req.ip;
+
   const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm
+    name,
+    email,
+    phoneNumber,
+    parentPhoneNumber,
+    schoolName,
+    password,
+    passwordConfirm,
+    devices: [{ deviceId: ipAddress, deviceName: userAgent }]
   });
 
   // 2) Generate the random reset token
@@ -112,6 +129,8 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
+  const userAgent = req.headers['user-agent'];
+  const ipAddress = req.ip;
 
   // 1) Check if email and password exist
   if (!email || !password) {
@@ -133,7 +152,22 @@ exports.login = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 3) If everything ok, send token to client
+  // 4) Check if the device is authorized
+  const isDeviceAuthorized = user.devices.some(
+    device => device.deviceId === ipAddress
+  );
+
+  if (!isDeviceAuthorized && user.devices.length > 0) {
+    return next(new AppError('Unauthorized device', 401));
+  }
+
+  // 5) If the device array is empty or device is not authorized, save the new device
+  if (user.devices.length === 0) {
+    user.devices.push({ deviceId: ipAddress, deviceName: userAgent });
+    await user.save({ validateBeforeSave: false });
+  }
+
+  // 5) If everything ok, send token to client
   createSendToken(user, 200, res);
 });
 

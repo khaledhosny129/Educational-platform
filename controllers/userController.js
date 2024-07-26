@@ -49,6 +49,29 @@ exports.getMe = (req, res, next) => {
   next();
 };
 
+exports.clearUserDevice = catchAsync(async (req, res, next) => {
+  const { userId } = req.params; // ID of the user whose device details should be cleared
+
+  // Ensure the requesting user is an admin
+  if (!req.user || req.user.role !== 'admin') {
+    return next(new AppError('Only admins can clear device details', 403));
+  }
+
+  // Find the user and clear device details
+  const user = await User.findById(userId);
+  if (!user) {
+    return next(new AppError('No user found with that ID', 404));
+  }
+
+  user.devices = []; // Clear the devices array
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User device details cleared'
+  });
+});
+
 exports.updateMe = catchAsync(async (req, res, next) => {
   // 1) Create error if user POSTs password data
   if (req.body.password || req.body.passwordConfirm) {

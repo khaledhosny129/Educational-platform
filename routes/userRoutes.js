@@ -40,6 +40,6 @@ router
   .patch(userController.updateUser)
   .delete(userController.deleteUser);
 
-//
+router.patch('/clearDevice/:userId', userController.clearUserDevice);
 
 module.exports = router;

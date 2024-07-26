@@ -25,6 +25,29 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  phoneNumber: {
+    type: String,
+    required: [true, 'Please provide your phone number'],
+    validate: {
+      validator: function(val) {
+        return validator.isMobilePhone(val, 'ar-EG');
+      },
+      message: 'Please provide a valid Egyptian phone number'
+    }
+  },
+  parentPhoneNumber: {
+    type: String,
+    validate: {
+      validator: function(val) {
+        return validator.isMobilePhone(val, 'ar-EG');
+      },
+      message: 'Please provide a valid Egyptian phone number'
+    }
+  },
+  schoolName: {
+    type: String,
+    required: [true, 'Please provide your school name']
+  },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
@@ -42,6 +65,12 @@ const userSchema = new mongoose.Schema({
       message: 'Passwords are not the same!'
     }
   },
+  devices: [
+    {
+      deviceId: String,
+      deviceName: String
+    }
+  ],
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,

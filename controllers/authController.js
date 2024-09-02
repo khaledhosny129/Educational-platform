@@ -50,7 +50,8 @@ exports.signup = catchAsync(async (req, res, next) => {
   } = req.body;
 
   const userAgent = req.headers['user-agent'];
-  const ipAddress = req.ip;
+  const ipAddress =
+    req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
 
   const newUser = await User.create({
     name,
@@ -130,7 +131,8 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   const userAgent = req.headers['user-agent'];
-  const ipAddress = req.ip;
+  const ipAddress =
+    req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
 
   // 1) Check if email and password exist
   if (!email || !password) {

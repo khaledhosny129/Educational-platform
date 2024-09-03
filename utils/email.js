@@ -10,7 +10,7 @@ module.exports = class Email {
       : user.email;
     this.from = isContactUs
       ? user.email
-      : `smart-weather-forcasting <${process.env.EMAIL_FROM}>`;
+      : `MR. Hossam Ajlan <${process.env.EMAIL_FROM}>`;
     if (isContactUs) {
       this.name = user.name.split(' ')[0];
     } else {

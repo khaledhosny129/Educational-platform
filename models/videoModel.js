@@ -18,11 +18,12 @@ const videoSchema = new mongoose.Schema({
   },
   unit: {
     type: String,
-    required: [true, 'A video must have a unit']
   },
   session: {
     type: String,
-    required: [true, 'A video must have a session']
+  },
+  revision: {
+    type: Number, // For revision videos
   }
 });
 

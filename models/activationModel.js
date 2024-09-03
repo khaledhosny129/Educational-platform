@@ -30,7 +30,7 @@ const activationSchema = new mongoose.Schema({
 activationSchema.pre('save', function(next) {
   // Set expiry 1 week from activation
   this.expiresAt = new Date(
-    this.activatedAt.getTime() + 1 * 60 * 1000
+    this.activatedAt.getTime() + 7 * 24 * 60 * 60 * 1000
     // this.activatedAt.getTime() + 1 * 60 * 1000  Set expiry 1 minute from activation
   );
   next();

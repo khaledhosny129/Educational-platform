@@ -14,6 +14,13 @@ router
   .delete(authController.restrictTo('admin'), videoController.deleteVideo);
 
 router
+  .route('/:grade/:level/revision/:num')
+  .post(authController.restrictTo('admin'), videoController.uploadVideo) // Reuse the same controller method
+  .get(videoController.getVideo) // Reuse the same controller method
+  .patch(authController.restrictTo('admin'), videoController.updateVideo) // Reuse the same controller method
+  .delete(authController.restrictTo('admin'), videoController.deleteVideo); // Reuse the same controller method
+
+router
   .route('/:grade/:level/:unit/:session/activate')
   .post(videoController.activateVideo);
 

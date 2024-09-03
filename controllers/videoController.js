@@ -4,6 +4,7 @@ const Activation = require('../models/activationModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+// Function to generate video details
 const generateVideoDetails = (grade, level, unit, session, num) => {
   const isRevision = !!num;
   const title = isRevision
@@ -15,6 +16,7 @@ const generateVideoDetails = (grade, level, unit, session, num) => {
   return { title, description, isRevision };
 };
 
+// Upload a new video
 exports.uploadVideo = catchAsync(async (req, res, next) => {
   const { youtubeCode } = req.body;
   const { grade, level, unit, session, num } = req.params;
@@ -35,7 +37,7 @@ exports.uploadVideo = catchAsync(async (req, res, next) => {
     grade,
     level,
     unit: isRevision ? 'revision' : unit,
-    session: isRevision ? num : session,
+    session: isRevision ? null : session,
     revision: isRevision ? num : undefined
   });
 
@@ -47,6 +49,7 @@ exports.uploadVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get all videos
 exports.getAllVideos = catchAsync(async (req, res, next) => {
   const videos = await Video.find();
   res.status(200).json({
@@ -58,6 +61,7 @@ exports.getAllVideos = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get a specific video
 exports.getVideo = catchAsync(async (req, res, next) => {
   const { grade, level, unit, session, num } = req.params;
   const userId = req.user.id;
@@ -65,8 +69,8 @@ exports.getVideo = catchAsync(async (req, res, next) => {
   const query = {
     grade,
     level,
-    unit: num ? 'revision' : unit,
-    session: num ? num : session,
+    unit: unit === 'revision' ? 'revision' : unit,
+    session: unit === 'revision' ? null : session,
     revision: num || undefined
   };
 
@@ -95,6 +99,7 @@ exports.getVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Update a video
 exports.updateVideo = catchAsync(async (req, res, next) => {
   const { youtubeCode } = req.body;
   const { grade, level, unit, session, num } = req.params;
@@ -111,7 +116,7 @@ exports.updateVideo = catchAsync(async (req, res, next) => {
     grade,
     level,
     unit: isRevision ? 'revision' : unit,
-    session: isRevision ? num : session,
+    session: isRevision ? null : session,
     revision: isRevision ? num : undefined
   };
 
@@ -141,14 +146,15 @@ exports.updateVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Delete a video
 exports.deleteVideo = catchAsync(async (req, res, next) => {
   const { grade, level, unit, session, num } = req.params;
 
   const query = {
     grade,
     level,
-    unit: num ? 'revision' : unit,
-    session: num ? num : session,
+    unit: unit === 'revision' ? 'revision' : unit,
+    session: unit === 'revision' ? null : session,
     revision: num || undefined
   };
 
@@ -164,6 +170,7 @@ exports.deleteVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Activate a video
 exports.activateVideo = catchAsync(async (req, res, next) => {
   const { code } = req.body;
   const { grade, level, unit, session, num } = req.params;
@@ -172,13 +179,12 @@ exports.activateVideo = catchAsync(async (req, res, next) => {
   const query = {
     grade,
     level,
-    unit: num ? 'revision' : unit,
-    session: num ? num : session,
+    unit: unit === 'revision' ? 'revision' : unit,
+    session: unit === 'revision' ? null : session,
     revision: num || undefined
   };
 
   const video = await Video.findOne(query);
-
   const accessCode = await AccessCode.findOne({ code });
 
   if (!video) {
@@ -217,6 +223,7 @@ exports.activateVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Deactivate a video
 exports.deactivateVideo = catchAsync(async (req, res, next) => {
   const { grade, level, unit, session, num } = req.params;
   const userId = req.user.id;
@@ -224,8 +231,8 @@ exports.deactivateVideo = catchAsync(async (req, res, next) => {
   const query = {
     grade,
     level,
-    unit: num ? 'revision' : unit,
-    session: num ? num : session,
+    unit: unit === 'revision' ? 'revision' : unit,
+    session: unit === 'revision' ? null : session,
     revision: num || undefined
   };
 
@@ -252,6 +259,7 @@ exports.deactivateVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get all activated videos for a user
 exports.getActivatedVideos = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
   const activations = await Activation.find({ user: userId })

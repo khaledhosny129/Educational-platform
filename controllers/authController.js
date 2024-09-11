@@ -161,7 +161,7 @@ exports.login = catchAsync(async (req, res, next) => {
   // 4) Check if the device is authorized
   const isDeviceAuthorized = user.deviceId === deviceId;
 
-  if (!isDeviceAuthorized && user.deviceId) {
+  if (!isDeviceAuthorized) {
     return next(new AppError('Unauthorized device', 401));
   }
 

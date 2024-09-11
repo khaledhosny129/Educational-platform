@@ -53,6 +53,10 @@ exports.signup = catchAsync(async (req, res, next) => {
   // const userAgent = req.headers['user-agent'];
   // const ipAddress =
   //   req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+  // Make sure `deviceId` is not null or undefined
+  if (!deviceId) {
+    return next(new AppError('Device ID is required!', 400));
+  }
 
   const newUser = await User.create({
     name,

@@ -46,12 +46,13 @@ exports.signup = catchAsync(async (req, res, next) => {
     passwordConfirm,
     phoneNumber,
     parentPhoneNumber,
-    schoolName
+    schoolName,
+    deviceId
   } = req.body;
 
-  const userAgent = req.headers['user-agent'];
-  const ipAddress =
-    req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+  // const userAgent = req.headers['user-agent'];
+  // const ipAddress =
+  //   req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
 
   const newUser = await User.create({
     name,
@@ -61,19 +62,19 @@ exports.signup = catchAsync(async (req, res, next) => {
     schoolName,
     password,
     passwordConfirm,
-    devices: [{ deviceId: ipAddress, deviceName: userAgent }]
+    deviceId
   });
 
-  // 2) Generate the random reset token
-  const confirmtoken = newUser.createConfirmEmailToken();
-  await newUser.save({ validateBeforeSave: false });
+  // // 2) Generate the random reset token
+  // const confirmtoken = newUser.createConfirmEmailToken();
+  // await newUser.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
-  const confirmURL = `${req.protocol}://${req.get(
-    'host'
-  )}/verify/${confirmtoken}`;
+  // // 3) Send it to user's email
+  // const confirmURL = `${req.protocol}://${req.get(
+  //   'host'
+  // )}/verify/${confirmtoken}`;
 
-  await new Email(newUser, confirmURL).sendWelcome();
+  // await new Email(newUser, confirmURL).sendWelcome();
 
   createSendToken(newUser, 201, res);
 });
@@ -129,21 +130,20 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
 });
 
 exports.login = catchAsync(async (req, res, next) => {
-  const { email, password } = req.body;
-  const userAgent = req.headers['user-agent'];
-  const ipAddress =
-    req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+  const { email, password, deviceId } = req.body;
 
   // 1) Check if email and password exist
   if (!email || !password) {
     return next(new AppError('Please provide email and password!', 400));
   }
+
   // 2) Check if user exists && password is correct
   const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password', 401));
   }
+
   // 3) Check if the user account is active
   if (!user.active) {
     return next(
@@ -155,21 +155,19 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 4) Check if the device is authorized
-  const isDeviceAuthorized = user.devices.some(
-    device => device.deviceId === ipAddress
-  );
+  const isDeviceAuthorized = user.deviceId === deviceId;
 
-  if (!isDeviceAuthorized && user.devices.length > 0) {
+  if (!isDeviceAuthorized && user.deviceId) {
     return next(new AppError('Unauthorized device', 401));
   }
 
-  // 5) If the device array is empty or device is not authorized, save the new device
-  if (user.devices.length === 0) {
-    user.devices.push({ deviceId: ipAddress, deviceName: userAgent });
+  // 5) If the user has no `deviceId` stored (new device), save the new `deviceId`
+  if (!user.deviceId) {
+    user.deviceId = deviceId;
     await user.save({ validateBeforeSave: false });
   }
 
-  // 5) If everything ok, send token to client
+  // 6) If everything is ok, send token to client
   createSendToken(user, 200, res);
 });
 

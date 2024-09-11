@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const { type } = require('os');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -65,24 +66,21 @@ const userSchema = new mongoose.Schema({
       message: 'Passwords are not the same!'
     }
   },
-  devices: [
-    {
-      deviceId: String,
-      deviceName: String
-    }
-  ],
+  deviceId: {
+    type: String
+  },
   passwordChangedAt: Date,
   passwordResetToken: String,
   passwordResetExpires: Date,
-  confirmEmailToken: String,
+  // confirmEmailToken: String,
   active: {
     type: Boolean,
     default: true
-  },
-  confirmEmail: {
-    type: Boolean,
-    default: false
   }
+  // confirmEmail: {
+  //   type: Boolean,
+  //   default: false
+  // }
 });
 
 userSchema.pre('save', async function(next) {

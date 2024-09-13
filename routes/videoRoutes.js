@@ -8,7 +8,7 @@ router.use(authController.protect);
 
 // Normal video routes (with unit)
 router
-  .route('/:grade/:level/:unit/:session')
+  .route('/:grade/:level/u:unit/:session')
   .post(authController.restrictTo('admin'), videoController.uploadVideo)
   .get(videoController.getVideo)
   .patch(authController.restrictTo('admin'), videoController.updateVideo)
@@ -16,7 +16,7 @@ router
 
 // Revision video routes (without unit)
 router
-  .route('/:grade/:level/r-:revision/:session')
+  .route('/:grade/:level/r:revision/:session')
   .post(authController.restrictTo('admin'), videoController.uploadVideo)
   .get(videoController.getVideo)
   .patch(authController.restrictTo('admin'), videoController.updateVideo)
@@ -24,25 +24,23 @@ router
 
 // Activate video
 router
-  .route('/:grade/:level/:unit/:session/activate')
+  .route('/:grade/:level/u:unit/:session/activate')
   .post(videoController.activateVideo);
 
 router
-  .route('/:grade/:level/r-:revision/:session/activate')
+  .route('/:grade/:level/r:revision/:session/activate')
   .post(videoController.activateVideo);
 
 // Deactivate video
 router
-  .route('/:grade/:level/:unit/:session/deactivate')
+  .route('/:grade/:level/u:unit/:session/deactivate')
   .post(videoController.deactivateVideo);
 
 router
-  .route('/:grade/:level/r-:revision/:session/deactivate')
+  .route('/:grade/:level/r:revision/:session/deactivate')
   .post(videoController.deactivateVideo);
 
 // Get activated videos for a user
-router
-  .route('/activations')
-  .get(videoController.getActivatedVideos);
+router.route('/activations').get(videoController.getActivatedVideos);
 
 module.exports = router;

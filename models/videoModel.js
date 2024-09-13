@@ -18,12 +18,15 @@ const videoSchema = new mongoose.Schema({
   },
   unit: {
     type: String,
+    default: null // Unit is null for revision videos
+  },
+  revision: {
+    type: String,
+    default: null // Revision is null for normal videos
   },
   session: {
     type: String,
-  },
-  revision: {
-    type: Number, // For revision videos
+    required: [true, 'A video must have a session']
   }
 });
 

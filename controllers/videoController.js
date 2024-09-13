@@ -4,34 +4,26 @@ const Activation = require('../models/activationModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-// Helper function to determine video type and generate titles/descriptions
-const generateVideoDetails = (grade, level, unit, session, num) => {
-  const isRevision = !!num;
-  const title = isRevision
-    ? `${grade} ${level} Revision ${num}`
-    : `${grade} ${level} Unit ${unit} Session ${session}`;
-  const description = isRevision
-    ? `Revision video for ${grade} ${level}, Revision ${num}`
-    : `Video for ${grade} ${level}, Unit ${unit}, Session ${session}`;
-  return { title, description, isRevision };
-};
-
 exports.uploadVideo = catchAsync(async (req, res, next) => {
   const { youtubeCode } = req.body;
-  const { grade, level, unit, session, num } = req.params;
-
-  const { title, description, isRevision } = generateVideoDetails(grade, level, unit, session, num);
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
 
   const newVideo = await Video.create({
-    title,
-    description,
+    title: revision
+      ? `${grade} ${level} Revision ${revision} Session ${session}`
+      : `${grade} ${level} Unit ${unit} Session ${session}`,
+    description: revision
+      ? `${grade} ${level} Revision ${revision} Session ${session}`
+      : `${grade} ${level} Unit ${unit} Session ${session}`,
     url: `https://www.youtube.com/watch?v=${youtubeCode}`,
     youtubeCode,
     grade,
     level,
-    unit: isRevision ? undefined : unit,
-    session: isRevision ? undefined : session,
-    revision: isRevision ? num : undefined
+    unit,
+    revision,
+    session
   });
 
   res.status(201).json({
@@ -42,30 +34,13 @@ exports.uploadVideo = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getAllVideos = catchAsync(async (req, res, next) => {
-  const videos = await Video.find();
-  res.status(200).json({
-    status: 'success',
-    results: videos.length,
-    data: {
-      videos
-    }
-  });
-});
-
 exports.getVideo = catchAsync(async (req, res, next) => {
-  const { grade, level, unit, session, num } = req.params;
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
   const userId = req.user.id;
 
-  const query = {
-    grade,
-    level,
-    unit: num ? undefined : unit,
-    session: num ? undefined : session,
-    revision: num || undefined
-  };
-
-  const video = await Video.findOne(query);
+  const video = await Video.findOne({ grade, level, unit, revision, session });
 
   if (!video) {
     return next(new AppError('No video found with the specified details', 404));
@@ -92,23 +67,19 @@ exports.getVideo = catchAsync(async (req, res, next) => {
 
 exports.updateVideo = catchAsync(async (req, res, next) => {
   const { youtubeCode } = req.body;
-  const { grade, level, unit, session, num } = req.params;
-
-  const { title, description, isRevision } = generateVideoDetails(grade, level, unit, session, num);
-
-  const query = {
-    grade,
-    level,
-    unit: num ? undefined : unit,
-    session: num ? undefined : session,
-    revision: num || undefined
-  };
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
 
   const video = await Video.findOneAndUpdate(
-    query,
+    { grade, level, unit, revision, session },
     {
-      title,
-      description,
+      title: revision
+        ? `${grade} ${level} Revision ${revision} Session ${session}`
+        : `${grade} ${level} Unit ${unit} Session ${session}`,
+      description: revision
+        ? `${grade} ${level} Revision ${revision} Session ${session}`
+        : `${grade} ${level} Unit ${unit} Session ${session}`,
       url: `https://www.youtube.com/watch?v=${youtubeCode}`,
       youtubeCode
     },
@@ -131,17 +102,11 @@ exports.updateVideo = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteVideo = catchAsync(async (req, res, next) => {
-  const { grade, level, unit, session, num } = req.params;
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
 
-  const query = {
-    grade,
-    level,
-    unit: num ? undefined : unit,
-    session: num ? undefined : session,
-    revision: num || undefined
-  };
-
-  const video = await Video.findOneAndDelete(query);
+  const video = await Video.findOneAndDelete({ grade, level, unit, revision, session });
 
   if (!video) {
     return next(new AppError('No video found with the specified details', 404));
@@ -153,32 +118,26 @@ exports.deleteVideo = catchAsync(async (req, res, next) => {
   });
 });
 
+// Activation and deactivation methods
 exports.activateVideo = catchAsync(async (req, res, next) => {
   const { code } = req.body;
-  const { grade, level, unit, session, num } = req.params;
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
   const userId = req.user.id;
 
-  const query = {
-    grade,
-    level,
-    unit: num ? undefined : unit,
-    session: num ? undefined : session,
-    revision: num || undefined
-  };
-
-  const video = await Video.findOne(query);
-
-  const accessCode = await AccessCode.findOne({ code });
+  const video = await Video.findOne({ grade, level, unit, revision, session });
 
   if (!video) {
     return next(new AppError('No video found with the specified details', 404));
   }
 
+  const accessCode = await AccessCode.findOne({ code });
+
   if (!accessCode || accessCode.expiresAt < Date.now() || accessCode.used) {
     return next(new AppError('Invalid or expired access code', 400));
   }
 
-  // Check if the video is already activated by the user
   const existingActivation = await Activation.findOne({
     video: video._id,
     user: userId
@@ -194,7 +153,6 @@ exports.activateVideo = catchAsync(async (req, res, next) => {
     code: accessCode._id
   });
 
-  // Mark access code as used
   accessCode.used = true;
   await accessCode.save();
 
@@ -207,18 +165,12 @@ exports.activateVideo = catchAsync(async (req, res, next) => {
 });
 
 exports.deactivateVideo = catchAsync(async (req, res, next) => {
-  const { grade, level, unit, session, num } = req.params;
+  const { grade, level, session } = req.params;
+  const unit = req.params.unit || null;
+  const revision = req.params.revision || null;
   const userId = req.user.id;
 
-  const query = {
-    grade,
-    level,
-    unit: num ? undefined : unit,
-    session: num ? undefined : session,
-    revision: num || undefined
-  };
-
-  const video = await Video.findOne(query);
+  const video = await Video.findOne({ grade, level, unit, revision, session });
 
   if (!video) {
     return next(new AppError('No video found with the specified details', 404));

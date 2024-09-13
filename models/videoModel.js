@@ -17,12 +17,10 @@ const videoSchema = new mongoose.Schema({
     required: [true, 'A video must have a level']
   },
   unit: {
-    type: String,
-    default: null // Unit is null for revision videos
+    type: String
   },
   revision: {
-    type: String,
-    default: null // Revision is null for normal videos
+    type: String
   },
   session: {
     type: String,

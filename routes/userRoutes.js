@@ -10,7 +10,7 @@ router.post('/login', authController.login);
 router.get('/logout', authController.logout);
 router.post('/confirmEmail', authController.confirmEmail);
 router.post('/forgotPassword', authController.forgotPassword);
-router.patch('/resetPassword/:token', authController.resetPassword);
+router.patch('/resetPassword', authController.resetPassword);
 router.get('/verify/:token', authController.verifyEmail);
 router.get('/', userController.getAllUsers);
 

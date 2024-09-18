@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   passwordChangedAt: Date,
-  passwordResetToken: String,
+  passwordResetCode: String,
   passwordResetExpires: Date,
   // confirmEmailToken: String,
   active: {
@@ -135,19 +135,20 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
   return false;
 };
 
-userSchema.methods.createPasswordResetToken = function() {
-  const resetToken = crypto.randomBytes(32).toString('hex');
+userSchema.methods.createPasswordResetCode = function() {
+  // Generate a random 4-6 digit number
+  const resetCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-  this.passwordResetToken = crypto
+  // Store the hashed version of the code in the database
+  this.passwordResetCode = crypto
     .createHash('sha256')
-    .update(resetToken)
+    .update(resetCode)
     .digest('hex');
 
-  // console.log({ resetToken }, this.passwordResetToken);
-
+  // Set expiration time to 10 minutes from now
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
-  return resetToken;
+  return resetCode; // Send plain code to the user
 };
 
 userSchema.methods.createConfirmEmailToken = function() {

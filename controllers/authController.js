@@ -332,7 +332,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on the code
   const hashedCode = crypto
     .createHash('sha256')
-    .update(req.body.code) // The reset code sent by the user
+    .update(req.body.resetCode) // The reset code sent by the user
     .digest('hex');
 
   const user = await User.findOne({

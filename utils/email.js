@@ -3,8 +3,7 @@ const pug = require('pug');
 // const htmlToText = require('html-to-text');
 
 module.exports = class Email {
-  // eslint-disable-next-line default-param-last
-  constructor(user, url, subject, isContactUs = false) {
+  constructor(user, resetCode, subject, isContactUs = false) {
     this.to = isContactUs
       ? 'support@smart-weather-forcasting.info'
       : user.email;
@@ -18,7 +17,8 @@ module.exports = class Email {
     }
     this.subject = subject;
     this.message = user.message;
-    this.url = url;
+    // this.url = url;
+    this.resetCode = resetCode; // Store the reset code if provided
   }
 
   newTransport() {
@@ -47,9 +47,10 @@ module.exports = class Email {
       name: this.name,
       firstName: this.firstName,
       email: this.from,
-      url: this.url,
+      // url: this.url,
       subject,
-      message
+      message,
+      resetCode: this.resetCode // Pass the reset code to the template if available
     });
 
     const mailOptions = {
@@ -67,10 +68,12 @@ module.exports = class Email {
     await this.send('welcome', 'Email Confirmation!');
   }
 
-  async sendPasswordReset() {
+  // Updated method to send a password reset code
+  async sendPasswordResetCode() {
     await this.send(
-      'passwordReset',
-      'Your password reset token (valid for only 10 minutes)'
+      'passwordReset', // Assuming you have a template named passwordReset
+      'Your password reset code (valid for 10 minutes)',
+      null // No message is needed in this case
     );
   }
 

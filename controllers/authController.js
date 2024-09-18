@@ -50,13 +50,13 @@ exports.signup = catchAsync(async (req, res, next) => {
     deviceId
   } = req.body;
 
-  // const userAgent = req.headers['user-agent'];
-  // const ipAddress =
-  //   req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
   // Make sure `deviceId` is not null or undefined
   if (!deviceId) {
     return next(new AppError('Device ID is required!', 400));
   }
+  // const userAgent = req.headers['user-agent'];
+  // const ipAddress =
+  //   req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
 
   const newUser = await User.create({
     name,
@@ -298,61 +298,60 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(new AppError('There is no user with email address.', 404));
+    return next(new AppError('There is no user with that email address.', 404));
   }
 
-  // 2) Generate the random reset token
-  const resetToken = user.createPasswordResetToken();
+  // 2) Generate the reset code
+  const resetCode = user.createPasswordResetCode();
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
-  const resetURL = `${req.protocol}://${req.get(
-    'host'
-  )}/resetPassword/${resetToken}`;
-
+  // 3) Send the reset code to the user's email
   try {
-    await new Email(user, resetURL).sendPasswordReset();
+    await new Email(user, resetCode).sendPasswordResetCode(); // Ensure this email template is updated to handle the code
 
     res.status(200).json({
       status: 'success',
-      message: 'Token sent to email!'
+      message: 'Reset code sent to email!'
     });
   } catch (err) {
-    user.passwordResetToken = undefined;
+    user.passwordResetCode = undefined;
     user.passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
 
     return next(
-      new AppError('There was an error sending the email. Try again later!'),
-      500
+      new AppError(
+        'There was an error sending the email. Try again later!',
+        500
+      )
     );
   }
 });
 
+// Reset Password Controller (verifies the reset code and resets the password)
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  // 1) Get user based on the token
-  const hashedToken = crypto
+  // 1) Get user based on the code
+  const hashedCode = crypto
     .createHash('sha256')
-    .update(req.params.token)
+    .update(req.body.code) // The reset code sent by the user
     .digest('hex');
 
   const user = await User.findOne({
-    passwordResetToken: hashedToken,
+    passwordResetCode: hashedCode,
     passwordResetExpires: { $gt: Date.now() }
   });
 
-  // 2) If token has not expired, and there is user, set the new password
+  // 2) If code has not expired, and there is user, set the new password
   if (!user) {
-    return next(new AppError('Token is invalid or has expired', 400));
+    return next(new AppError('Reset code is invalid or has expired', 400));
   }
+
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
-  user.passwordResetToken = undefined;
+  user.passwordResetCode = undefined;
   user.passwordResetExpires = undefined;
   await user.save();
 
-  // 3) Update changedPasswordAt property for the user
-  // 4) Log the user in, send JWT
+  // 3) Log the user in (send JWT)
   createSendToken(user, 200, res);
 });
 

@@ -67,7 +67,8 @@ const userSchema = new mongoose.Schema({
     }
   },
   deviceId: {
-    type: String
+    type: String,
+    default: null
   },
   passwordChangedAt: Date,
   passwordResetCode: String,

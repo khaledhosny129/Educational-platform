@@ -63,7 +63,7 @@ exports.clearUserDevice = catchAsync(async (req, res, next) => {
     return next(new AppError('No user found with that ID', 404));
   }
 
-  user.deviceId = undefined; // Clear the device
+  user.deviceId = null; // Clear the device
   await user.save({ validateBeforeSave: false });
 
   res.status(200).json({
